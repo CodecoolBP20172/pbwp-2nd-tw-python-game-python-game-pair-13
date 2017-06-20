@@ -2,22 +2,24 @@
 import os
 import random
 
+
 def generate_board():
-    #generates a board
+    # generates a board
     board = []
     for x in range(10):
         board.append(["~"]*10)
     return board
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-def print_board(board,u):
-    #prints the board in a human-readable fashion
+
+def print_board(board, u):
+    # prints the board in a human-readable fashion
     print ("This is " + u + "'s board")
     bold = "\033[1m"
     reset = "\033[0;0m"
     for x in range(10):
-        if x==0:
+        if x == 0:
             print ("       " + bold + str(x+1) + reset, end="")
         else:
             print ("     " + bold + str(x+1) + reset, end="")
@@ -30,17 +32,18 @@ def print_board(board,u):
     print (" ")
     return board
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def get_coordinate():
-    #gets the coordinates of the starting point of the ship from the player
+    # gets the coordinates of the starting point of the ship from the player
     while True:
         user_input = input("Enter a coordinates (row,col): ")
         try:
             coordinate = user_input.split(",")
             if len(coordinate) != 2:
                 raise Exception("Too many or too few coordinates.")
-            #converts coordinates to intigers and to represent indicies
+            # converts coordinates to intigers and to represent indicies
             coordinate[0] = int(coordinate[0])-1
             coordinate[1] = int(coordinate[1])-1
             if coordinate[0] > 9 or coordinate[0] < 0 or coordinate[1] > 9 or coordinate[1] < 0:
@@ -51,61 +54,65 @@ def get_coordinate():
         except Exception as e:
             print(e)
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def vertical_or_horizontal():
-    #gets the orientation of the ship
-   while True:
-       user_input = input("Vertical or horizontal (v/h)?: ")
-       if user_input.lower() == "v" or user_input.lower() == "h":
-           return user_input.lower()
-       else:
-           print("Invalid input. Please only enter v or h.")
+    # gets the orientation of the ship
+    while True:
+        user_input = input("Vertical or horizontal (v/h)?: ")
+        if user_input.lower() == "v" or user_input.lower() == "h":
+            return user_input.lower()
+        else:
+            print("Invalid input. Please only enter v or h.")
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def validate_ship_position(board, length, orientation, x, y):
-    #Checks that the ship can be placed on the board at the given coordinates
-    #i.e. it doesn't hang out from the board or being placed on another ship
-    if orientation =="h" and y+length > 10:
+    # Checks that the ship can be placed on the board at the given coordinates
+    # i.e. it doesn't hang out from the board or being placed on another ship
+    if orientation == "h" and y+length > 10:
         print ("It's not even in the ocean!")
         return False
-    elif orientation =="v" and x+length > 10:
+    elif orientation == "v" and x+length > 10:
         print ("It's not even in the ocean!")
         return False
-    elif orientation=="h":
+    elif orientation == "h":
         for i in range(length):
             if board[x][y+i] != "~":
                 print ("There's already a ship there! Choose another place.")
                 return False
-    elif orientation=="v":
+    elif orientation == "v":
         for i in range(length):
             if board[x+i][y] != "~":
                 print ("There's already a ship there! Choose another place.")
                 return False
     return True
+
 
 def validate_ship_position_ai(board, length, orientation, x, y):
-    #Checks that the ship can be placed on the board at the given coordinates
-    #i.e. it doesn't hang out from the board or being placed on another ship
-    if orientation =="h" and y+length > 10:
+    # Checks that the ship can be placed on the board at the given coordinates
+    # i.e. it doesn't hang out from the board or being placed on another ship
+    if orientation == "h" and y+length > 10:
         return False
-    elif orientation =="v" and x+length > 10:
+    elif orientation == "v" and x+length > 10:
         return False
-    elif orientation=="h":
+    elif orientation == "h":
         for i in range(length):
             if board[x][y+i] != "~":
                 return False
-    elif orientation=="v":
+    elif orientation == "v":
         for i in range(length):
             if board[x+i][y] != "~":
                 return False
     return True
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def ship_placement(board, ship, s, orientation, x, y):
-    #places the ship on the board at the given coordinates and in the given orientation
+    # places the ship on the board at the given coordinates and in the given orientation
     if orientation == "v":
         for i in range(ship):
             board[x+i][y] = s
@@ -114,33 +121,35 @@ def ship_placement(board, ship, s, orientation, x, y):
             board[x][y+i] = s
     return board
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def user_place_ships(board, ships, u):
-    #Player places his/her ships on his/her board
-    for ship,length in ships.items():
+    # Player places his/her ships on his/her board
+    for ship, length in ships.items():
         print ("Placement phase")
-        print_board(board,u)
+        print_board(board, u)
         print ("Placing " + ship + " ({} long)".format(length))
         valid = False
         while not valid:
-            x,y = get_coordinate()
+            x, y = get_coordinate()
             orientation = vertical_or_horizontal()
             valid = validate_ship_position(board, length, orientation, x, y)
         board = ship_placement(board, length, ship[0], orientation, x, y)
         os.system("tput reset")
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def ai_place_ships(board, ships, u):
-    #AI places its ships on its board
-    for ship,length in ships.items():
+    # AI places its ships on its board
+    for ship, length in ships.items():
         print ("AI placing " + ship + "({} long)..".format(length))
         valid = False
         while not valid:
-            x = random.randint(0,9)
-            y = random.randint(0,9)
-            orientation = random.randint(0,1)
+            x = random.randint(0, 9)
+            y = random.randint(0, 9)
+            orientation = random.randint(0, 1)
             if orientation == 0:
                 orientation = "v"
             else:
@@ -148,10 +157,11 @@ def ai_place_ships(board, ships, u):
             valid = validate_ship_position_ai(board, length, orientation, x, y)
         board = ship_placement(board, length, ship[0], orientation, x, y)
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def hit_check(board, x, y):
-    #Check if the given coordinates hit target or miss
+    # Check if the given coordinates hit target or miss
     if board[x][y] == "~":
         return "miss"
     elif board[x][y] == "X" or board[x][y] == "0":
@@ -159,7 +169,8 @@ def hit_check(board, x, y):
     else:
         return "hit"
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def player_move(board, showboard, u, ships):
     while True:
@@ -190,12 +201,13 @@ def player_move(board, showboard, u, ships):
     print ("\n")
     return board, showboard
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def ai_move(board, showboard, u, ships):
     while True:
-        x = random.randint(0,9)
-        y = random.randint(0,9)
+        x = random.randint(0, 9)
+        y = random.randint(0, 9)
         res = hit_check(board, x, y)
         if res == "hit":
             check_sink(board, x, y)
@@ -216,10 +228,11 @@ def ai_move(board, showboard, u, ships):
             break
     input("Hit ENTER to continue.")
     return board, showboard
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def check_win(board):
-    #checks if one of the players already hit all of the other players ships
+    # checks if one of the players already hit all of the other players ships
     for row in board:
         for i in row:
             if i == "~" or i == "0" or i == "X":
@@ -228,10 +241,11 @@ def check_win(board):
                 return False
     return True
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 def check_sink(board, x, y):
-    #checks if a boat is fully sunk
+    # checks if a boat is fully sunk
     first_letter = board[x][y]
     counter = 0
     if first_letter in ("Y", "P", "A", "G", "L"):
@@ -250,7 +264,8 @@ def check_sink(board, x, y):
         if counter == 1:
             return print(ship, "sunk.")
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 def main():
     os.system("tput reset")
@@ -259,7 +274,13 @@ def main():
     user1_board_show = generate_board()
     user2_board_show = generate_board()
 
-    ships={"Yacht":1, "Pirate ship":2, "Armored cruiser":3, "Galley":4, "Longship":5}
+    ships = {
+            "Yacht": 1,
+            "Pirate ship": 2,
+            "Armored cruiser": 3,
+            "Galley": 4,
+            "Longship": 5
+            }
 
     user_place_ships(user1_board, ships, "Player1")
     print_board(user1_board, "Player1")
@@ -278,7 +299,7 @@ def main():
         print_board(user2_board_show, "Player2")
         user2_board, user2_board_show = player_move(user2_board, user2_board_show, "Player2", ships)
         win_condition = check_win(user2_board)
-        if win_condition == True:
+        if win_condition is True:
             winner = "Player1"
             break
         os.system("tput reset")
@@ -286,11 +307,12 @@ def main():
         print_board(user1_board_show, "Player1")
         user1_board, user1_board_show = player_move(user1_board, user1_board_show, "Player1", ships)
         win_condition = check_win(user1_board)
-        if win_condition == True:
+        if win_condition is True:
             winner = "Player2"
             break
     print ("GAME OVER")
     print ("The winner is ", winner + "!")
+
 
 def vs_ai():
     os.system("tput reset")
@@ -299,7 +321,13 @@ def vs_ai():
     user1_board_show = generate_board()
     ai_board_show = generate_board()
 
-    ships={"Yacht":1,"Pirate ship":2, "Armored cruiser":3, "Galley":4, "Longship":5}
+    ships = {
+            "Yacht": 1,
+            "Pirate ship": 2,
+            "Armored cruiser": 3,
+            "Galley": 4,
+            "Longship": 5
+            }
 
     user_place_ships(user1_board, ships, "Player")
     print_board(user1_board, "Player")
@@ -316,20 +344,21 @@ def vs_ai():
         print_board(ai_board_show, "AI")
         ai_board, ai_board_show = player_move(ai_board, ai_board_show, "AI", ships)
         win_condition = check_win(ai_board)
-        if win_condition == True:
+        if win_condition is True:
             winner = "Player1"
             break
         os.system("tput reset")
         print("AI's turn")
         user1_board, user1_board_show = ai_move(user1_board, user1_board_show, "Player", ships)
         win_condition = check_win(user1_board)
-        if win_condition == True:
+        if win_condition is True:
             winner = "AI"
             break
     print ("GAME OVER")
     print ("The winner is ", winner + "!")
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     while True:
@@ -338,7 +367,7 @@ if __name__ == "__main__":
             main()
         elif user_input == "ai":
             vs_ai()
-        elif user_input =="exit":
+        elif user_input == "exit":
             exit()
         else:
             print("Invalid input.")
