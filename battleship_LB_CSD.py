@@ -2,6 +2,11 @@
 import os
 import random
 
+BOLD = "\033[1m"
+RESET = "\033[0;0m"
+RED = "\033[91m"
+BLUE = "\033[34m"
+
 
 def generate_board():
     # generates a board
@@ -13,32 +18,27 @@ def generate_board():
 # ------------------------------------------------------------------------------
 
 
-def print_board(board, u):
+def print_board(board, u, color):
     # prints the board in a human-readable fashion
-    bold = "\033[1m"
-    reset = "\033[0;0m"
-    red = "\033[91m"
-    blue = "\033[34m"
-
     def colouring_board(color):
-        print ("This is " + bold + color + u + reset + "'s board")
+        print ("This is " + BOLD + color + u + RESET + "'s board")
         for x in range(10):
             if x == 0:
-                print ("       " + bold + str(x+1) + reset, end="")
+                print ("       " + BOLD + str(x+1) + RESET, end="")
             else:
-                print ("     " + bold + str(x+1) + reset, end="")
+                print ("     " + BOLD + str(x+1) + RESET, end="")
         print ("\n")
 
         for i in range(10):
             row = board[i]
-            print (bold + "{:<2d}".format(i+1) + reset, *row, sep="     ")
+            print (BOLD + "{:<2d}".format(i+1) + RESET, *row, sep="     ")
             print ("\n")
         print (" ")
         return board
     if u == "Player1" or u == "Player":
-        colouring_board(red)
+        colouring_board(RED)
     elif u == "Player2" or u == "AI":
-        colouring_board(blue)
+        colouring_board(BLUE)
 
 # ------------------------------------------------------------------------------
 
@@ -46,21 +46,24 @@ def print_board(board, u):
 def get_coordinate():
     # gets the coordinates of the starting point of the ship from the player
     while True:
-        user_input = input("Enter a coordinates (row,col): ")
-        try:
-            coordinate = user_input.split(",")
-            if len(coordinate) != 2:
-                raise Exception("Too many or too few coordinates.")
-            # converts coordinates to intigers and to represent indicies
-            coordinate[0] = int(coordinate[0])-1
-            coordinate[1] = int(coordinate[1])-1
-            if coordinate[0] > 9 or coordinate[0] < 0 or coordinate[1] > 9 or coordinate[1] < 0:
-                raise Exception("Invalid entry. Your coordinate should be between 1-10.")
-            return coordinate
-        except ValueError:
-            print("Only numeric values are accepted as coordinates.")
-        except Exception as e:
-            print(e)
+        user_input = input("Enter coordinates (row,col) or 'exit' to quit game: ")
+        if user_input == "exit":
+            quit()
+        else:
+            try:
+                coordinate = user_input.split(",")
+                if len(coordinate) != 2:
+                    raise Exception("Too many or too few coordinates.")
+                # converts coordinates to intigers and to represent indicies
+                coordinate[0] = int(coordinate[0])-1
+                coordinate[1] = int(coordinate[1])-1
+                if coordinate[0] > 9 or coordinate[0] < 0 or coordinate[1] > 9 or coordinate[1] < 0:
+                    raise Exception("Invalid entry. Your coordinate should be between 1-10.")
+                return coordinate
+            except ValueError:
+                print("Only numeric values are accepted as coordinates.")
+            except Exception as e:
+                print(e)
 
 # ------------------------------------------------------------------------------
 
@@ -122,24 +125,22 @@ def validate_ship_position_ai(board, length, orientation, x, y):
 def ship_placement(board, ship, s, orientation, x, y):
     # places the ship on the board at the given coordinates and in the given orientation
     color = "\033[32m"
-    bold = "\033[1m"
-    reset = "\033[0;0m"
     if orientation == "v":
         for i in range(ship):
-            board[x+i][y] = color + bold + s + reset
+            board[x+i][y] = color + BOLD + s + RESET
     if orientation == "h":
         for i in range(ship):
-            board[x][y+i] = color + bold + s + reset
+            board[x][y+i] = color + BOLD + s + RESET
     return board
 
 # ------------------------------------------------------------------------------
 
 
-def user_place_ships(board, ships, u):
+def user_place_ships(board, ships, u, color):
     # Player places his/her ships on his/her board
     for ship, length in ships.items():
         print ("Placement phase")
-        print_board(board, u)
+        print_board(board, u, color)
         print ("Placing " + ship + " ({} long)".format(length))
         valid = False
         while not valid:
@@ -148,6 +149,28 @@ def user_place_ships(board, ships, u):
             valid = validate_ship_position(board, length, orientation, x, y)
         board = ship_placement(board, length, ship[0], orientation, x, y)
         os.system("tput reset")
+
+
+def list_of_position(board):
+    # saves the position of the ships placed by the player
+    galley_pos = []
+    yacht_pos = []
+    pirate_ship_pos = []
+    longship_pos = []
+    armored_cruiser_pos = []
+    for i_x, x in enumerate(board):
+        for i_y, y in enumerate(x):
+            if y == "G":
+                galley_pos.append([i_x, i_y])
+            if y == "Y":
+                yacht_pos.append([i_x, i_y])
+            if y == "P":
+                pirate_ship_pos.append([i_x, i_y])
+            if y == "L":
+                longship_pos.append([i_x, i_y])
+            if y == "A":
+                armored_cruiser_pos.append([i_x, i_y])
+    return galley_pos, yacht_pos, pirate_ship_pos, longship_pos, armored_cruiser_pos
 
 # ------------------------------------------------------------------------------
 
@@ -171,33 +194,30 @@ def ai_place_ships(board, ships, u):
 # ------------------------------------------------------------------------------
 
 
-def hit_check(board, x, y):
+def hit_check(board, x, y, letter=None):
     # Check if the given coordinates hit target or miss
     if board[x][y] == "~":
-        return "miss"
+        return "miss", letter
     elif board[x][y] == "X" or board[x][y] == "0":
-        return "try again"
+        return "try again", letter
     else:
-        return "hit"
+        letter = board[x][y]
+        return "hit", letter
 
 # ------------------------------------------------------------------------------
 
 
 def player_move(board, showboard, u, ships):
     while True:
-        bold = "\033[1m"
-        reset = "\033[0;0m"
-        red = "\033[91m"
-        blue = "\033[34m"
         orange = "\033[93m"
         hit_color = ""
         miss_color = ""
         if u == "Player1" or u == "Player":
             hit_color = orange
-            miss_color = red
+            miss_color = RED
         elif u == "Player2":
             hit_color = orange
-            miss_color = blue
+            miss_color = BLUE
         x, y = get_coordinate()
         res = hit_check(board, x, y)
         if res == "hit":
@@ -205,7 +225,7 @@ def player_move(board, showboard, u, ships):
             print("It's a hit.")
             check_sink(board, x, y)
             board[x][y] = "X"
-            showboard[x][y] = hit_color + bold + "X" + reset
+            showboard[x][y] = hit_color + BOLD + "X" + RESET
             print_board(showboard, u)
             input("Hit ENTER to continue.")
             os.system("tput reset")
@@ -216,7 +236,7 @@ def player_move(board, showboard, u, ships):
         else:
             os.system("tput reset")
             board[x][y] = "0"
-            showboard[x][y] = miss_color + bold + "0" + reset
+            showboard[x][y] = miss_color + BOLD + "0" + RESET
             print("It's a miss.")
             print_board(showboard, u)
             input("Hit ENTER to continue.")
@@ -232,7 +252,7 @@ def ai_move(board, showboard, u, ships):
     while True:
         x = random.randint(0, 9)
         y = random.randint(0, 9)
-        res = hit_check(board, x, y)
+        res, letter = hit_check(board, x, y)
         if res == "hit":
             check_sink(board, x, y)
             board[x][y] = "X"
@@ -252,6 +272,10 @@ def ai_move(board, showboard, u, ships):
             break
     input("Hit ENTER to continue.")
     return board, showboard
+
+
+def smart_ai_move(board, previous_hit_x, previous_hit_y, ships, s): # s will be "letter"
+    hit_ship = []
 # ------------------------------------------------------------------------------
 
 
@@ -278,7 +302,7 @@ def check_sink(board, x, y):
         elif first_letter == "P":
             ship = "Pirate ship"
         elif first_letter == "A":
-            ship = "Armored cruiser"
+            ship = "ArmoRED cruiser"
         elif first_letter == "G":
             ship = "Galley"
         elif first_letter == "L":
@@ -306,29 +330,29 @@ def main():
             "Longship": 5
             }
 
-    user_place_ships(user1_board, ships, "Player1")
-    print_board(user1_board, "Player1")
+    user_place_ships(user1_board, ships, "Player1", RED)
+    print_board(user1_board, "Player1", RED)
     input("Hit ENTER to continue.")
     os.system("tput reset")
 
-    user_place_ships(user2_board, ships, "Player2")
-    print_board(user2_board, "Player2")
+    user_place_ships(user2_board, ships, "Player2", BLUE)
+    print_board(user2_board, "Player2", BLUE)
     input("Hit ENTER to continue.")
     os.system("tput reset")
 
     win_condition = False
     while not win_condition:
         os.system("tput reset")
-        print ("Player1's turn")
-        print_board(user2_board_show, "Player2")
+        print (RED + BOLD + "Player1's turn" + RESET)
+        print_board(user2_board_show, "Player2", BLUE)
         user2_board, user2_board_show = player_move(user2_board, user2_board_show, "Player2", ships)
         win_condition = check_win(user2_board)
         if win_condition is True:
             winner = "Player1"
             break
         os.system("tput reset")
-        print ("Player2's turn")
-        print_board(user1_board_show, "Player1")
+        print (BLUE + BOLD + "Player2's turn" + RESET)
+        print_board(user1_board_show, "Player1", RED)
         user1_board, user1_board_show = player_move(user1_board, user1_board_show, "Player1", ships)
         win_condition = check_win(user1_board)
         if win_condition is True:
@@ -353,8 +377,8 @@ def vs_ai():
             "Longship": 5
             }
 
-    user_place_ships(user1_board, ships, "Player")
-    print_board(user1_board, "Player")
+    user_place_ships(user1_board, ships, "Player", RED)
+    print_board(user1_board, "Player", RED)
     input("Hit ENTER to continue.")
     os.system("tput reset")
     ai_place_ships(ai_board, ships, "AI")
@@ -364,15 +388,15 @@ def vs_ai():
     win_condition = False
     while not win_condition:
         os.system("tput reset")
-        print("Player's turn")
-        print_board(ai_board_show, "AI")
+        print(RED + BOLD + "Player's turn" + RESET)
+        print_board(ai_board_show, "AI", BLUE)
         ai_board, ai_board_show = player_move(ai_board, ai_board_show, "AI", ships)
         win_condition = check_win(ai_board)
         if win_condition is True:
             winner = "Player1"
             break
         os.system("tput reset")
-        print("AI's turn")
+        print(BLUE + BOLD + "AI's turn" + RESET)
         user1_board, user1_board_show = ai_move(user1_board, user1_board_show, "Player", ships)
         win_condition = check_win(user1_board)
         if win_condition is True:
