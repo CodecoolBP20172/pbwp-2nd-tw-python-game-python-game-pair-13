@@ -15,22 +15,30 @@ def generate_board():
 
 def print_board(board, u):
     # prints the board in a human-readable fashion
-    print ("This is " + u + "'s board")
     bold = "\033[1m"
     reset = "\033[0;0m"
-    for x in range(10):
-        if x == 0:
-            print ("       " + bold + str(x+1) + reset, end="")
-        else:
-            print ("     " + bold + str(x+1) + reset, end="")
-    print ("\n")
+    red = "\033[91m"
+    blue = "\033[34m"
 
-    for i in range(10):
-        row = board[i]
-        print (bold + "{:<2d}".format(i+1) + reset, *row, sep="     ")
+    def colouring_board(color):
+        print ("This is " + bold + color + u + reset + "'s board")
+        for x in range(10):
+            if x == 0:
+                print ("       " + bold + str(x+1) + reset, end="")
+            else:
+                print ("     " + bold + str(x+1) + reset, end="")
         print ("\n")
-    print (" ")
-    return board
+
+        for i in range(10):
+            row = board[i]
+            print (bold + "{:<2d}".format(i+1) + reset, *row, sep="     ")
+            print ("\n")
+        print (" ")
+        return board
+    if u == "Player1" or u == "Player":
+        colouring_board(red)
+    elif u == "Player2" or u == "AI":
+        colouring_board(blue)
 
 # ------------------------------------------------------------------------------
 
@@ -113,12 +121,15 @@ def validate_ship_position_ai(board, length, orientation, x, y):
 
 def ship_placement(board, ship, s, orientation, x, y):
     # places the ship on the board at the given coordinates and in the given orientation
+    color = "\033[32m"
+    bold = "\033[1m"
+    reset = "\033[0;0m"
     if orientation == "v":
         for i in range(ship):
-            board[x+i][y] = s
+            board[x+i][y] = color + bold + s + reset
     if orientation == "h":
         for i in range(ship):
-            board[x][y+i] = s
+            board[x][y+i] = color + bold + s + reset
     return board
 
 # ------------------------------------------------------------------------------
@@ -174,6 +185,19 @@ def hit_check(board, x, y):
 
 def player_move(board, showboard, u, ships):
     while True:
+        bold = "\033[1m"
+        reset = "\033[0;0m"
+        red = "\033[91m"
+        blue = "\033[34m"
+        orange = "\033[93m"
+        hit_color = ""
+        miss_color = ""
+        if u == "Player1" or u == "Player":
+            hit_color = orange
+            miss_color = red
+        elif u == "Player2":
+            hit_color = orange
+            miss_color = blue
         x, y = get_coordinate()
         res = hit_check(board, x, y)
         if res == "hit":
@@ -181,7 +205,7 @@ def player_move(board, showboard, u, ships):
             print("It's a hit.")
             check_sink(board, x, y)
             board[x][y] = "X"
-            showboard[x][y] = "X"
+            showboard[x][y] = hit_color + bold + "X" + reset
             print_board(showboard, u)
             input("Hit ENTER to continue.")
             os.system("tput reset")
@@ -192,7 +216,7 @@ def player_move(board, showboard, u, ships):
         else:
             os.system("tput reset")
             board[x][y] = "0"
-            showboard[x][y] = "0"
+            showboard[x][y] = miss_color + bold + "0" + reset
             print("It's a miss.")
             print_board(showboard, u)
             input("Hit ENTER to continue.")
